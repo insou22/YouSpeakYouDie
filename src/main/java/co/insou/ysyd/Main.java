@@ -11,12 +11,28 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Main extends JavaPlugin implements Listener {
 
-    private ConcurrentLinkedQueue<UUID> killQueue = new ConcurrentLinkedQueue<>();
+    // I saw them doing getters and setters like this in MassiveCore
+    // MassiveCore is massive so it must know right
+    // "If we only want one instance of our Main class, why not make it a singleton"
+
+    private static Main plugin;
+    public static Main getPlugin() { return plugin; }
+    public static void setPlugin(Main plugin) { Main.plugin = plugin; }
+
+    private static ConcurrentLinkedQueue<UUID> killQueue;
+    public static ConcurrentLinkedQueue<UUID> getKillQueue() { return killQueue; }
+    public static void setKillQueue(ConcurrentLinkedQueue<UUID> killQueue) { Main.killQueue = killQueue; }
 
     @Override
     public void onEnable() {
-        super.getServer().getPluginManager().registerEvents(this, this);
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+        setPlugin(this);
+        onEnhancedEnable();
+    }
+
+    public static void onEnhancedEnable() {
+        setKillQueue(new ConcurrentLinkedQueue<UUID>());
+        Main.getPlugin().getServer().getPluginManager().registerEvents(Main.getPlugin(), Main.getPlugin());
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(Main.getPlugin(), new Runnable() {
             @Override
             public void run() {
                 for (UUID uuid : killQueue) {
@@ -29,7 +45,11 @@ public class Main extends JavaPlugin implements Listener {
 
     @EventHandler
     public void on(AsyncPlayerChatEvent event) {
-        killQueue.add(event.getPlayer().getUniqueId());
+        onEnhanced(event);
+    }
+
+    public static void onEnhanced(AsyncPlayerChatEvent event) {
+        getKillQueue().add(event.getPlayer().getUniqueId());
     }
 
 }
